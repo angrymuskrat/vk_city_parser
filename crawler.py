@@ -1,31 +1,31 @@
+import json
+import threading
+
 import requests
 
+from HttpClient import HttpClient
 from tasks import Task
+from vectorizer import TextVectorizer
 
 
 class Crawler:
-    def __init__(self, token):
+
+    def __init__(self, token: str):
+        self.vectoriser = TextVectorizer()
+        self.client = HttpClient()
         self.token = token
-        self.active_tasks = []
-        self.completed_results = []
+        self.status = 'free'
+        self.task = None
+        self.thread = threading.Thread(target=self.execute_task())
+        self.thread.daemon = True
+        self.thread.start()
 
-    def add_task(self, task):
-        self.active_tasks.append(task)
-
-    def execute_task(self, task: Task):
+    def execute_task(self):
+        task = self.task
         params = task.parameters
         params['access_token'] = self.token
-        response = requests.get(task.method_API, params, verify=False)
-        data = response.json()
-        task.response = data
-        # Здесь будет логика выполнения задачи и возвращение результатов
-        pass
-
-    @staticmethod
-    def fetch_results(task):
-        if task.response is None:
-            print("Error: task is not complete")
-        else:
-            task.fetch_results()
-        # Здесь код для извлечения результатов выполненных заданий
-        pass
+        data = self.client.get_request(task.method_API, params)
+        #pretty_json = json.dumps(data, indent=4, ensure_ascii=False)
+        #print(pretty_json)
+        task.fetch_results(data)
+        self.vectoriser.find_simular(task.prompt, task.response)
