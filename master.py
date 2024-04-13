@@ -1,4 +1,4 @@
-from asyncio import sleep
+from time import sleep
 
 from crawler import Crawler
 import queue
@@ -13,7 +13,7 @@ class MasterCrawler:
         self.crawlers = []
         self.queue = queue.Queue()
         for i in range(crawler_count):
-            self.crawlers.append(Crawler(crawler_tokens[i]))
+            self.crawlers.append(Crawler(i, crawler_tokens[i]))
 
     def add_request(self, task: Task):
         self.queue.put(task)
@@ -21,16 +21,17 @@ class MasterCrawler:
     def execute(self):
         while True:
             for i in range(self.crawler_count):
+                #print(self.crawlers[i].status)
                 match self.crawlers[i].status:
                     case "free":
                         if not self.queue.empty():
                             self.crawlers[i].status = "busy"
                             self.crawlers[i].task = self.queue.get()
-                            self.crawlers[i].execute_task()
                     case "busy":
                         continue
                     case "done":
-                        print(self.crawlers[i].task.result)
+                        print(self.crawlers[i].task.response)
                         self.crawlers[i].task = None
                         self.crawlers[i].status = "free"
-            sleep(100)
+            #print("----")
+            sleep(1)
