@@ -21,7 +21,7 @@ class Crawler:
 
     def run(self):
         while True:
-            print("my id:", self.id, "my status:", self.status)
+            # print("my id:", self.id, "my status:", self.status)
             if self.status != "done":
                 if self.task is not None:
                     self.execute_task()
@@ -32,9 +32,12 @@ class Crawler:
         task = self.task
         params = task.parameters
         params['access_token'] = self.token
-        data = self.client.get_request(task.method_API, params)
-        # pretty_json = json.dumps(data, indent=4, ensure_ascii=False)
-        # print(pretty_json)
-        task.fetch_results(data)
-        print("my id:", self.id, "my response:", self.task.response)
+        while True:
+            data = self.client.get_request(task.method_API, params)
+            # pretty_json = json.dumps(data, indent=4, ensure_ascii=False)
+            # print(pretty_json)
+            if not task.fetch_results(data):
+                break
+            params['offset'] += params['count']
+            print("my id:", self.id, "my response:", self.task.response)
         task.result = self.vectoriser.find_simular(task.prompt, task.response)

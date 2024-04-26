@@ -50,24 +50,13 @@ class TextVectorizer:
         embeddings = torch.nn.functional.normalize(embeddings)
         return embeddings[0].cpu().numpy()
 
-    def find_simular(self, origin: str, texts: list[str], top_n: int = 5, threshold: float = 0.9):
+    def find_simular(self, origin: str, texts: list[str], top_n: int = 5, threshold: float = None):
         vector_origin = self.vectorize(origin)
         vector_texts = []
         for text in texts:
-            # print(text)
             vector_texts.append(self.vectorize(text))
-        dis = ds.cdist([vector_origin], vector_texts)
-        combined = list(zip(texts, dis[0]))
-        sorted_combined = sorted(combined, key=lambda x: x[1])
-
-        # Теперь мы можем выбрать первые n текстов
-        lowest_coeff_texts = [text for text, coeff in sorted_combined[:10]]
-
-        # for text in lowest_coeff_texts:
-        #     print(self.preprocess_text(text), "\n ---------------------------------------------------------------")
-
         cos_sim = cosine_similarity([vector_origin], vector_texts)
         combined = list(zip(texts, cos_sim[0]))
         sorted_combined = sorted(combined, key=lambda x: -x[1])  # Сортируем по убыванию сходства
-        lowest_coeff_texts = [text for text, coeff in sorted_combined[:10]]
+        lowest_coeff_texts = [text for text, coeff in sorted_combined[:top_n]]
         return lowest_coeff_texts

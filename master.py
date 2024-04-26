@@ -21,7 +21,7 @@ class MasterCrawler:
     def execute(self):
         while True:
             for i in range(self.crawler_count):
-                #print(self.crawlers[i].status)
+                # print(self.crawlers[i].status)
                 match self.crawlers[i].status:
                     case "free":
                         if not self.queue.empty():
@@ -30,8 +30,12 @@ class MasterCrawler:
                     case "busy":
                         continue
                     case "done":
-                        print(self.crawlers[i].task.response)
+                        print("result for: ", self.crawlers[i].task.prompt)
+                        for result in self.crawlers[i].task.result:
+                            print(result)
+                        # print(self.crawlers[i].task.result)
+                        print("-----------------------------------")
                         self.crawlers[i].task = None
                         self.crawlers[i].status = "free"
-            #print("----")
+            # print("----")
             sleep(1)
