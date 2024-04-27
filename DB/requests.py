@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from DB.models import UserRequest
-from api.models import UserRequestModel
+from DB.models import UserRequest, Post
+from api.models import UserRequestModel, PostModel
 
 
 def get_user_request(db: Session, user_request_id: int):
@@ -13,3 +13,18 @@ def create_user_request(db: Session, user_request: UserRequestModel):
     db.commit()
     db.refresh(db_user_request)
     return db_user_request
+
+
+def create_posts(db: Session, posts: list[PostModel]):
+    db_posts = [Post(**post.dict()) for post in posts]
+    db.add_all(db_posts)
+    db.commit()
+    for post in db_posts:
+        db.refresh(post)
+    return db_posts
+
+
+def get_posts_by_ids(db: Session, ids: list[int]):
+    return db.query(Post).filter(Post.ID.in_(ids)).all()
+
+
