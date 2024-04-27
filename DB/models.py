@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Table, ForeignKey, Float, DateTime
+from sqlalchemy import Column, Integer, String, Table, ForeignKey, Float, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -23,8 +23,8 @@ class UserRequest(Base):
     type = Column(Integer)
     status = Column(Integer)
     # group_id = Column(Integer, ForeignKey('group.ID'))
-    time_from = Column(DateTime)
-    time_to = Column(DateTime)
+    time_from = Column(Date)
+    time_to = Column(Date)
 
     # group = relationship("Group", back_populates="user_requests")
     tasks = relationship("Task", back_populates="user_request")
@@ -38,8 +38,8 @@ class Task(Base):
     prompt = Column(String(255))
     type = Column(String(255))
     # group_id = Column(Integer, ForeignKey('group.ID'))
-    time_from = Column(DateTime)
-    time_to = Column(DateTime)
+    time_from = Column(Date)
+    time_to = Column(Date)
 
     user_request = relationship("UserRequest", back_populates="tasks")
     groups = relationship("Group", secondary=group_task_table, back_populates="task")

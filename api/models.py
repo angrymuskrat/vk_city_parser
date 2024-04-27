@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date
 
 from pydantic import BaseModel
 
@@ -9,8 +9,8 @@ class UserRequestModel(BaseModel):
     type: int
     status: int
     # group_id: int
-    time_from: datetime
-    time_to: datetime
+    time_from: date
+    time_to: date
 
     class Config:
         orm_mode = True
@@ -21,8 +21,8 @@ class TaskModel(BaseModel):
     prompt: str
     type: int
     # group_id: int
-    time_from: datetime
-    time_to: datetime
+    time_from: date
+    time_to: date
 
 
 class PostModel(BaseModel):
