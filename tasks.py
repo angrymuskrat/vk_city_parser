@@ -4,7 +4,8 @@ from datetime import datetime
 class Task:
     version = '5.199'
 
-    def __init__(self, prompt: str, task_type: str, method_api: str, params: dict):
+    def __init__(self, id: int, prompt: str, task_type: str, method_api: str, params: dict):
+        self.ID = id
         self.prompt = prompt
         self.task_type = task_type
         self.method_API = method_api
@@ -35,8 +36,9 @@ class CollectGroupsTask(Task):
 class CollectPostsTask(Task):
     count = 100
 
-    def __init__(self, prompt: str, owner_id: int, date_from: str, date_to: str):
+    def __init__(self, id: int, prompt: str, owner_id: int, date_from: str, date_to: str):
         super().__init__(
+            id=id,
             prompt=prompt,
             task_type='Find groups',
             method_api='https://api.vk.com/method/wall.get',
