@@ -1,28 +1,35 @@
-from sqlalchemy import Column, Integer, String, Table, ForeignKey, Float, Date
+from sqlalchemy import Column, Integer, String, Table, ForeignKey, Float, Date, TEXT, PrimaryKeyConstraint, \
+    ForeignKeyConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+
+from DB.vector import Vector
 
 Base = declarative_base()
 
 post_task_table = Table('post_task', Base.metadata,
-                        Column('PostID', Integer, ForeignKey('post.ID')),
-                        Column('TaskID', Integer, ForeignKey('task.ID'))
+                        Column('PostID', Integer),
+                        Column('GroupID', Integer),
+                        Column('TaskID', Integer, ForeignKey('task.ID')),
+                        PrimaryKeyConstraint('PostID', 'GroupID', 'TaskID'),
+                        ForeignKeyConstraint(['PostID', 'GroupID'], ['post.ID', 'post.GroupID'])
                         )
 
 group_task_table = Table('group_task', Base.metadata,
                          Column('GroupID', Integer, ForeignKey('group.ID')),
-                         Column('TaskID', Integer, ForeignKey('task.ID'))
+                         Column('TaskID', Integer, ForeignKey('task.ID')),
+                         PrimaryKeyConstraint('GroupID', 'TaskID')
                          )
 
 
 class UserRequest(Base):
     __tablename__ = 'user_request'
 
-    ID = Column(Integer, primary_key=True)
+    ID = Column(Integer, primary_key=True, autoincrement=True)
     prompt = Column(String(255))
-    type = Column(Integer)
-    status = Column(Integer)
-    # group_id = Column(Integer, ForeignKey('group.ID'))
+    type = Column(Integer, default=0)
+    status = Column(Integer, default= 0)
+    group_id = Column(Integer, nullable=True)
     time_from = Column(Date)
     time_to = Column(Date)
 
@@ -33,11 +40,11 @@ class UserRequest(Base):
 class Task(Base):
     __tablename__ = 'task'
 
-    ID = Column(Integer, primary_key=True)
+    ID = Column(Integer, primary_key=True, autoincrement=True)
     UserRequestID = Column(Integer, ForeignKey('user_request.ID'))
     prompt = Column(String(255))
     type = Column(String(255))
-    # group_id = Column(Integer, ForeignKey('group.ID'))
+    group_id = Column(Integer, nullable=True)
     time_from = Column(Date)
     time_to = Column(Date)
 
@@ -50,9 +57,9 @@ class Group(Base):
     __tablename__ = 'group'
 
     ID = Column(Integer, primary_key=True)
-    name = Column(String(255))
-    description = Column(String(255))
-    vector = Column(Float)
+    name = Column(String(255), nullable=True)
+    description = Column(TEXT, nullable=True)
+    vector = Column(Vector, nullable=True)
 
     # user_requests = relationship("UserRequest", back_populates="group")
     posts = relationship("Post", back_populates="group")
@@ -63,9 +70,10 @@ class Post(Base):
     __tablename__ = 'post'
 
     ID = Column(Integer, primary_key=True)
-    text = Column(String(255))
-    GroupID = Column(Integer, ForeignKey('group.ID'))
-    vector = Column(Float)
+    GroupID = Column(Integer, ForeignKey('group.ID'), primary_key=True)
+    text = Column(TEXT)
+    date = Column(Date)
+    vector = Column(Vector)
 
     group = relationship("Group", back_populates="posts")
     task = relationship("Task", secondary=post_task_table, back_populates="posts")
