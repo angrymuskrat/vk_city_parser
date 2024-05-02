@@ -3,6 +3,7 @@ import threading
 from time import sleep
 
 from DB.database import SessionLocal
+from DB.requests import update_task_status
 from HttpClient import HttpClient
 from tasks import Task
 from vectorizer import TextVectorizer
@@ -33,6 +34,7 @@ class Crawler:
     def execute_task(self):
         with SessionLocal() as db:
             task = self.task
+            update_task_status(db, task.ID, 1)
             params = task.parameters
             params['access_token'] = self.token
             while True:
@@ -45,3 +47,4 @@ class Crawler:
                 print("my id:", self.id, "my response:", self.task.response)
             task.result = self.vectoriser.find_simular(task.prompt, task.response)
             task.save_in_db(db)
+            update_task_status(db, task.ID, 2)

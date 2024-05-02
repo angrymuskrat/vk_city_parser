@@ -26,12 +26,12 @@ class UserRequest(Base):
     __tablename__ = 'user_request'
 
     ID = Column(Integer, primary_key=True, autoincrement=True)
-    prompt = Column(String(255))
+    prompt = Column(TEXT)
     type = Column(Integer, default=0)
-    status = Column(Integer, default= 0)
+    status = Column(Integer, default=0)
     group_id = Column(Integer, nullable=True)
-    time_from = Column(Date)
-    time_to = Column(Date)
+    time_from = Column(Date, nullable=True)
+    time_to = Column(Date, nullable=True)
 
     # group = relationship("Group", back_populates="user_requests")
     tasks = relationship("Task", back_populates="user_request")
@@ -42,11 +42,12 @@ class Task(Base):
 
     ID = Column(Integer, primary_key=True, autoincrement=True)
     UserRequestID = Column(Integer, ForeignKey('user_request.ID'))
-    prompt = Column(String(255))
-    type = Column(String(255))
+    prompt = Column(TEXT)
+    type = Column(Integer)
+    status = Column(Integer, default=0)
     group_id = Column(Integer, nullable=True)
-    time_from = Column(Date)
-    time_to = Column(Date)
+    time_from = Column(Date, nullable=True)
+    time_to = Column(Date, nullable=True)
 
     user_request = relationship("UserRequest", back_populates="tasks")
     groups = relationship("Group", secondary=group_task_table, back_populates="task")

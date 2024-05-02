@@ -28,6 +28,7 @@ class CreateTaskModel(BaseModel):
     prompt: str
     UserRequestID: int
     type: int
+    status: int
     group_id: Optional[int] = Field(default=None)
     time_from: date
     time_to: date
@@ -38,6 +39,7 @@ class TaskModel(BaseModel):
     prompt: str
     UserRequestID: int
     type: int
+    status: int
     group_id: Optional[int] = Field(default=None)
     time_from: date
     time_to: date

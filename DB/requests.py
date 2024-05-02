@@ -24,6 +24,15 @@ def create_task(db: Session, task: CreateTaskModel):
     return db_task
 
 
+def update_task_status(db: Session, task_id: int, new_status: int):
+    task = db.query(Task).filter(Task.ID == task_id).first()
+    if not task:
+        return None
+    task.status = new_status
+    db.commit()
+    return task
+
+
 def create_group_if_not_exists(db: Session, group_id: int):
     existing_group = db.query(Group).filter(Group.ID == group_id).first()
     if existing_group is not None:
