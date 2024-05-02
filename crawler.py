@@ -2,7 +2,9 @@ import json
 import threading
 from time import sleep
 
+from DB.database import SessionLocal
 from HttpClient import HttpClient
+from tasks import Task
 from vectorizer import TextVectorizer
 
 
@@ -14,7 +16,7 @@ class Crawler:
         self.client = HttpClient()
         self.token = token
         self.status = 'free'
-        self.task = None
+        self.task: Task = None
         self.thread = threading.Thread(target=self.run)
         self.thread.daemon = True
         self.thread.start()
@@ -29,15 +31,17 @@ class Crawler:
             sleep(0.5)
 
     def execute_task(self):
-        task = self.task
-        params = task.parameters
-        params['access_token'] = self.token
-        while True:
-            data = self.client.get_request(task.method_API, params)
-            # pretty_json = json.dumps(data, indent=4, ensure_ascii=False)
-            # print(pretty_json)
-            if not task.fetch_results(data):
-                break
-            params['offset'] += params['count']
-            print("my id:", self.id, "my response:", self.task.response)
-        task.result = self.vectoriser.find_simular(task.prompt, task.response)
+        with SessionLocal() as db:
+            task = self.task
+            params = task.parameters
+            params['access_token'] = self.token
+            while True:
+                data = self.client.get_request(task.method_API, params)
+                # pretty_json = json.dumps(data, indent=4, ensure_ascii=False)
+                # print(pretty_json)
+                if not task.fetch_results(data, self.vectoriser):
+                    break
+                params['offset'] += params['count']
+                print("my id:", self.id, "my response:", self.task.response)
+            task.result = self.vectoriser.find_simular(task.prompt, task.response)
+            task.save_in_db(db)
