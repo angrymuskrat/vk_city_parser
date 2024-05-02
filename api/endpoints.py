@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 
 from DB import requests
 from DB.database import SessionLocal
-from api.models import UserRequestModel, CreateUserRequestModel
-from logic.request_to_tasks import create_tasks_from_request
+from api.models import UserRequestModel, CreateUserRequestModel, AnswerUserRequestModel
+from logic.request_to_tasks import create_tasks_from_request, check_status_of_user_request
 from master import MasterCrawler
 
 app = FastAPI()
@@ -24,12 +24,13 @@ token = 'vk1.a.N0Bo0jedRrOsPYno8fHywsFSKG2FuAJoO1az6snThQqDl6AwwseVhdlhDITyYjEUj
 master_crawler = MasterCrawler(1, [token])
 
 
-@app.get("/user_requests/{user_request_id}", response_model=UserRequestModel)
+@app.get("/user_requests/{user_request_id}", response_model=AnswerUserRequestModel)
 def read_user_request(user_request_id: int, db: Session = Depends(get_db)):
     db_user_request = requests.get_user_request(db, user_request_id=user_request_id)
     if db_user_request is None:
         raise HTTPException(status_code=404, detail="UserRequest not found")
-    return db_user_request
+    answer_user_request = check_status_of_user_request(db_user_request, db)
+    return answer_user_request
 
 
 @app.post("/user_requests/", response_model=UserRequestModel, status_code=status.HTTP_201_CREATED)

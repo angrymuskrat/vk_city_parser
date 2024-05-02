@@ -4,7 +4,7 @@ from DB.models import UserRequest, Post, Task, Group
 from api.models import UserRequestModel, PostModel, TaskModel, CreateUserRequestModel, CreateTaskModel
 
 
-def get_user_request(db: Session, user_request_id: int):
+def get_user_request(db: Session, user_request_id: int) -> UserRequestModel:
     return db.query(UserRequest).filter(UserRequest.ID == user_request_id).first()
 
 
@@ -31,6 +31,12 @@ def update_task_status(db: Session, task_id: int, new_status: int):
     task.status = new_status
     db.commit()
     return task
+
+
+def get_task_statuses_by_user_request_id(db: Session, user_request_id: int):
+    tasks = db.query(Task).join(UserRequest).filter(UserRequest.ID == user_request_id).all()
+    task_statuses = [(task.ID, task.status) for task in tasks]
+    return task_statuses
 
 
 def create_group_if_not_exists(db: Session, group_id: int):
@@ -68,6 +74,27 @@ def create_posts(db: Session, posts: list[PostModel]):
 
 def get_posts_by_ids(db: Session, post_ids: list[int], group_id: int,):
     return db.query(Post).filter(Post.GroupID == group_id, Post.ID.in_(post_ids)).all()
+
+
+def get_group_posts_by_task_id(db: Session, task_id: int):
+    # Получаем все посты и их группы, связанные с задачей по её ID
+    results = db.query(Group.name, Post.text) \
+        .join(Post, Group.posts) \
+        .join(Task, Post.task) \
+        .filter(Task.ID == task_id) \
+        .all()
+
+    if not results:
+        return None  # Возвращаем None, если по задаче нет постов или группы
+
+    # Используем имя группы как ключ, и собираем список постов как значения
+    group_name = results[0][0]  # Предполагаем, что все посты из одной группы
+    posts = [post_text for _, post_text in results]
+
+    # Формируем словарь с именем группы и списком постов
+    group_posts = {group_name: posts}
+
+    return group_posts
 
 
 def add_task_to_multiple_posts(db: Session, post_ids: list[int], group_id: int, task_id: int):

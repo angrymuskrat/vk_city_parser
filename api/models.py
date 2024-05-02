@@ -24,6 +24,21 @@ class UserRequestModel(BaseModel):
         orm_mode = True
 
 
+class AnswerUserRequestModel(BaseModel):
+    ID: int
+    prompt: str
+    status: int
+    tasks_count: int
+    tasks_in_process: int
+    tasks_done: int
+    time_from: date
+    time_to: date
+    answer: Optional[dict] = Field(default=None)
+
+    class Config:
+        orm_mode = True
+
+
 class CreateTaskModel(BaseModel):
     prompt: str
     UserRequestID: int

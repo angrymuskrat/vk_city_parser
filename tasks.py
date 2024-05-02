@@ -86,7 +86,7 @@ class CollectPostsTask(Task):
                 ID=result['id'],
                 text=result['text'],
                 GroupID=self.group_id,
-                date=result['date'],
+                date=result['date'].date(),
                 vector=result['vector'].tolist()
             )
             posts.append(post)
