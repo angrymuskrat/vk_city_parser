@@ -1,14 +1,14 @@
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 from DB.models import UserRequest, Post, Task, Group
-from api.models import UserRequestModel, PostModel, TaskModel, CreateUserRequestModel, CreateTaskModel
+from api.models import UserRequestModel, PostModel, TaskModel, CreateUserRequestModel, CreateTaskModel, GroupModel
 
 
 def get_user_request(db: Session, user_request_id: int) -> UserRequestModel:
     return db.query(UserRequest).filter(UserRequest.ID == user_request_id).first()
 
 
-def create_user_request(db: Session, user_request: CreateUserRequestModel):
+def create_user_request(db: Session, user_request: CreateUserRequestModel) -> UserRequestModel:
     db_user_request = UserRequest(**user_request.dict(exclude_unset=True))
     db.add(db_user_request)
     db.commit()
@@ -16,7 +16,7 @@ def create_user_request(db: Session, user_request: CreateUserRequestModel):
     return db_user_request
 
 
-def create_task(db: Session, task: CreateTaskModel):
+def create_task(db: Session, task: CreateTaskModel) -> TaskModel:
     db_task = Task(**task.dict(exclude_unset=True))
     db.add(db_task)
     db.commit()
@@ -24,7 +24,7 @@ def create_task(db: Session, task: CreateTaskModel):
     return db_task
 
 
-def update_task_status(db: Session, task_id: int, new_status: int):
+def update_task_status(db: Session, task_id: int, new_status: int) -> TaskModel:
     task = db.query(Task).filter(Task.ID == task_id).first()
     if not task:
         return None
@@ -33,13 +33,13 @@ def update_task_status(db: Session, task_id: int, new_status: int):
     return task
 
 
-def get_task_statuses_by_user_request_id(db: Session, user_request_id: int):
+def get_task_statuses_by_user_request_id(db: Session, user_request_id: int) -> list:
     tasks = db.query(Task).join(UserRequest).filter(UserRequest.ID == user_request_id).all()
     task_statuses = [(task.ID, task.status) for task in tasks]
     return task_statuses
 
 
-def create_group_if_not_exists(db: Session, group_id: int):
+def create_group_if_not_exists(db: Session, group_id: int) -> GroupModel:
     existing_group = db.query(Group).filter(Group.ID == group_id).first()
     if existing_group is not None:
         return existing_group
@@ -51,7 +51,7 @@ def create_group_if_not_exists(db: Session, group_id: int):
     return new_group
 
 
-def create_posts(db: Session, posts: list[PostModel]):
+def create_posts(db: Session, posts: list[PostModel]) -> list[PostModel]:
     post_keys = [(post.ID, post.GroupID) for post in posts]
     existing_posts = db.query(Post.ID, Post.GroupID).filter(
         and_(Post.ID.in_([key[0] for key in post_keys]), Post.GroupID.in_([key[1] for key in post_keys]))
@@ -72,11 +72,11 @@ def create_posts(db: Session, posts: list[PostModel]):
     return new_posts
 
 
-def get_posts_by_ids(db: Session, post_ids: list[int], group_id: int,):
+def get_posts_by_ids(db: Session, post_ids: list[int], group_id: int) -> list[PostModel]:
     return db.query(Post).filter(Post.GroupID == group_id, Post.ID.in_(post_ids)).all()
 
 
-def get_group_posts_by_task_id(db: Session, task_id: int):
+def get_group_posts_by_task_id(db: Session, task_id: int) -> dict:
     # Получаем все посты и их группы, связанные с задачей по её ID
     results = db.query(Group.name, Post.text) \
         .join(Post, Group.posts) \
@@ -97,7 +97,7 @@ def get_group_posts_by_task_id(db: Session, task_id: int):
     return group_posts
 
 
-def add_task_to_multiple_posts(db: Session, post_ids: list[int], group_id: int, task_id: int):
+def add_task_to_multiple_posts(db: Session, post_ids: list[int], group_id: int, task_id: int) -> TaskModel:
     task = db.query(Task).filter(Task.ID == task_id).first()
     if not task:
         return "Task not found"
