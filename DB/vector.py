@@ -17,7 +17,7 @@ class Vector(UserDefinedType):
     def bind_processor(self, dialect):
         def process(value):
             if value is not None:
-                return '[' + ', '.join(str(el) for el in value) + ']'  # Преобразование в список, если используется numpy массив
+                return '[' + ', '.join(str(el) for el in value) + ']'
             return value
 
         return process
@@ -25,7 +25,7 @@ class Vector(UserDefinedType):
     def result_processor(self, dialect, coltype):
         def process(value):
             if value is not None:
-                return json.loads(value)# Преобразование обратно в numpy массив
+                return json.loads(value)
             return value
 
         return process

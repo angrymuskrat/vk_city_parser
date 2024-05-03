@@ -35,16 +35,7 @@ class Crawler:
         with SessionLocal() as db:
             task = self.task
             update_task_status(db, task.ID, 1)
-            params = task.parameters
-            params['access_token'] = self.token
-            while True:
-                data = self.client.get_request(task.method_API, params)
-                # pretty_json = json.dumps(data, indent=4, ensure_ascii=False)
-                # print(pretty_json)
-                if not task.fetch_results(data, self.vectoriser):
-                    break
-                params['offset'] += params['count']
-                print("my id:", self.id, "my response:", self.task.response)
+            task.make_requests(self.token, self.client, self.vectoriser)
             task.result = self.vectoriser.find_simular(task.prompt, task.response)
             task.save_in_db(db)
             update_task_status(db, task.ID, 2)

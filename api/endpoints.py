@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 
 from DB import requests
 from DB.database import SessionLocal
-from api.models import UserRequestModel, CreateUserRequestModel, AnswerUserRequestModel
+from api.models import UserRequestModel, CreateUserRequestModel, AnswerUserRequestModel, CreateTaskModel, TaskModel
 from logic.request_to_tasks import create_tasks_from_request, check_status_of_user_request
 from master import MasterCrawler
+from tasks import CollectGroupsTask
 
 app = FastAPI()
 
@@ -38,3 +39,12 @@ def create_user_request_endpoint(user_request: CreateUserRequestModel, db: Sessi
     ret = requests.create_user_request(db=db, user_request=user_request)
     create_tasks_from_request(master_crawler, ret, db)
     return ret
+
+
+@app.post("/add_groups/", response_model=TaskModel, status_code=status.HTTP_201_CREATED)
+def create_groups(user_request: CreateTaskModel, db: Session = Depends(get_db)):
+    created_task = requests.create_task(db, user_request)
+    task_for_crawler = CollectGroupsTask(created_task.ID,
+                                         created_task.prompt)
+    master_crawler.add_request(task_for_crawler)
+    return created_task

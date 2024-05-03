@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Table, ForeignKey, Float, Date, TEXT, PrimaryKeyConstraint, \
+from sqlalchemy import Column, Integer, String, Table, ForeignKey, ARRAY, Date, TEXT, PrimaryKeyConstraint, \
     ForeignKeyConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -29,7 +29,7 @@ class UserRequest(Base):
     prompt = Column(TEXT)
     type = Column(Integer, default=0)
     status = Column(Integer, default=0)
-    group_id = Column(Integer, nullable=True)
+    group_id = Column(ARRAY(Integer), nullable=True)
     time_from = Column(Date, nullable=True)
     time_to = Column(Date, nullable=True)
 
