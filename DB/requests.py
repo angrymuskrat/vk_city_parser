@@ -9,9 +9,11 @@ def get_user_request(db: Session, user_request_id: int) -> UserRequestModel:
     return db.query(UserRequest).filter(UserRequest.ID == user_request_id).first()
 
 
-def create_user_request(db: Session, user_request: CreateUserRequestModel | AddGroupsUserRequestModel) \
-        -> UserRequestModel:
+def create_user_request(db: Session,
+                        user_request: CreateUserRequestModel | AddGroupsUserRequestModel,
+                        request_type: int = 1) -> UserRequestModel:
     db_user_request = UserRequest(**user_request.dict(exclude_unset=True))
+    db_user_request.type = request_type
     db.add(db_user_request)
     db.commit()
     db.refresh(db_user_request)
@@ -113,6 +115,14 @@ def find_similar_groups_by_vector(db: Session, target_vector: list[int]) -> list
     group_ids = [row[0] for row in result]
 
     return group_ids
+
+
+def get_groups_by_task_id(db: Session, task_id: int) -> dict:
+    groups = {'Groups_found': []}
+    task = db.query(Task).filter(Task.ID == task_id).one_or_none()
+    if task is not None:
+        groups['Groups_found'] = [group.name for group in task.groups]
+    return groups
 
 
 def create_posts(db: Session, posts: list[PostModel]) -> list[PostModel]:

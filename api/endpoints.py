@@ -45,6 +45,6 @@ def create_user_request_endpoint(user_request: CreateUserRequestModel, db: Sessi
 
 @app.post("/add_groups/", response_model=UserRequestModel, status_code=status.HTTP_201_CREATED)
 def create_groups(user_request: AddGroupsUserRequestModel, db: Session = Depends(get_db)):
-    ret = requests.create_user_request(db=db, user_request=user_request)
+    ret = requests.create_user_request(db=db, user_request=user_request, request_type=2)
     create_group_tasks_from_request(master_crawler, ret, db)
     return ret

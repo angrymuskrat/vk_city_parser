@@ -35,8 +35,8 @@ class AnswerUserRequestModel(BaseModel):
     tasks_count: int
     tasks_in_process: int
     tasks_done: int
-    time_from: date
-    time_to: date
+    time_from: Optional[date] = Field(default=None)
+    time_to: Optional[date] = Field(default=None)
     answer: Optional[dict] = Field(default=None)
 
     class Config:
