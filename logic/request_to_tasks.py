@@ -1,10 +1,12 @@
 from sqlalchemy.orm import Session
 
+from vectorizer import TextVectorizer
 from DB import requests
-from DB.requests import create_group_if_not_exists, get_task_statuses_by_user_request_id, get_group_posts_by_task_id
+from DB.requests import create_group_if_not_exists, get_task_statuses_by_user_request_id, get_group_posts_by_task_id, \
+    find_similar_groups_by_vector
 from api.models import UserRequestModel, CreateTaskModel, AnswerUserRequestModel
 from master import MasterCrawler
-from tasks import CollectPostsTask
+from tasks import CollectPostsTask, CollectGroupsTask
 
 
 def check_status_of_user_request(user_request: UserRequestModel, db: Session) -> AnswerUserRequestModel:
@@ -37,7 +39,9 @@ def check_status_of_user_request(user_request: UserRequestModel, db: Session) ->
     return answer
 
 
-def create_tasks_from_request(master: MasterCrawler, request: UserRequestModel, db: Session):
+def create_post_tasks_from_request(master: MasterCrawler, request: UserRequestModel, db: Session):
+    if not request.group_id:
+        request.group_id = find_simular_groups(request.prompt, db)
     for group_id in request.group_id:
         task = CreateTaskModel(
             prompt=request.prompt,
@@ -56,3 +60,24 @@ def create_tasks_from_request(master: MasterCrawler, request: UserRequestModel, 
                                             created_task.time_from,
                                             created_task.time_to)
         master.add_request(task_for_crawler)
+
+
+def create_group_tasks_from_request(master: MasterCrawler, request: UserRequestModel, db: Session):
+    task = CreateTaskModel(
+        prompt=request.prompt,
+        UserRequestID=request.ID,
+        type=0,
+        status=0,
+        time_from=request.time_from,
+        time_to=request.time_to,
+    )
+    created_task = requests.create_task(db, task)
+    task_for_crawler = CollectGroupsTask(created_task.ID,
+                                         created_task.prompt)
+    master.add_request(task_for_crawler)
+
+
+def find_simular_groups(prompt: str, db: Session) -> list[int]:
+    vectorizer = TextVectorizer()
+    vector = vectorizer.vectorize(prompt)
+    return find_similar_groups_by_vector(db, vector)

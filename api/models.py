@@ -11,14 +11,18 @@ class CreateUserRequestModel(BaseModel):
     time_to: date = Field(default="2024-05-03")
 
 
+class AddGroupsUserRequestModel(BaseModel):
+    prompt: str = Field(default="поиграть в настольные игры")
+
+
 class UserRequestModel(BaseModel):
     ID: int
     prompt: str
     type: int
     status: int
-    group_id: Optional[list[int]] = Field(default=None)
-    time_from: date
-    time_to: date
+    group_id: Optional[list[int]] = Field(default=[])
+    time_from: Optional[date]
+    time_to: Optional[date]
 
     class Config:
         orm_mode = True

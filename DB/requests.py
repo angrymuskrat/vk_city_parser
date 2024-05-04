@@ -1,14 +1,16 @@
-from sqlalchemy import and_
+from sqlalchemy import and_, text
 from sqlalchemy.orm import Session
 from DB.models import UserRequest, Post, Task, Group
-from api.models import UserRequestModel, PostModel, TaskModel, CreateUserRequestModel, CreateTaskModel, GroupModel
+from api.models import UserRequestModel, PostModel, TaskModel, CreateUserRequestModel, CreateTaskModel, GroupModel, \
+    AddGroupsUserRequestModel
 
 
 def get_user_request(db: Session, user_request_id: int) -> UserRequestModel:
     return db.query(UserRequest).filter(UserRequest.ID == user_request_id).first()
 
 
-def create_user_request(db: Session, user_request: CreateUserRequestModel) -> UserRequestModel:
+def create_user_request(db: Session, user_request: CreateUserRequestModel | AddGroupsUserRequestModel) \
+        -> UserRequestModel:
     db_user_request = UserRequest(**user_request.dict(exclude_unset=True))
     db.add(db_user_request)
     db.commit()
@@ -97,6 +99,20 @@ def add_task_to_multiple_groups(db: Session, group_ids: list[int], task_id: int)
     db.commit()
     db.refresh(task)
     return task
+
+
+def find_similar_groups_by_vector(db: Session, target_vector: list[int]) -> list[int]:
+    vector = '[' + ', '.join(str(el) for el in target_vector) + ']'
+    sql_query = text(f"""
+    SELECT "ID" FROM public.group 
+    ORDER BY "group".vector <-> '{vector}'
+    LIMIT 3;
+    """)
+
+    result = db.execute(sql_query).fetchall()
+    group_ids = [row[0] for row in result]
+
+    return group_ids
 
 
 def create_posts(db: Session, posts: list[PostModel]) -> list[PostModel]:
