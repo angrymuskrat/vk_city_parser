@@ -1,4 +1,6 @@
 from sqlalchemy import and_, text
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 from DB.models import UserRequest, Post, Task, Group
 from api.models import UserRequestModel, PostModel, TaskModel, CreateUserRequestModel, CreateTaskModel, GroupModel, \
@@ -9,22 +11,22 @@ def get_user_request(db: Session, user_request_id: int) -> UserRequestModel:
     return db.query(UserRequest).filter(UserRequest.ID == user_request_id).first()
 
 
-def create_user_request(db: Session,
-                        user_request: CreateUserRequestModel | AddGroupsUserRequestModel,
-                        request_type: int = 1) -> UserRequestModel:
+async def create_user_request(db: AsyncSession,
+                              user_request: CreateUserRequestModel | AddGroupsUserRequestModel,
+                              request_type: int = 1) -> UserRequestModel:
     db_user_request = UserRequest(**user_request.dict(exclude_unset=True))
     db_user_request.type = request_type
     db.add(db_user_request)
-    db.commit()
-    db.refresh(db_user_request)
+    await db.commit()
+    await db.refresh(db_user_request)
     return db_user_request
 
 
-def create_task(db: Session, task: CreateTaskModel) -> TaskModel:
+async def create_task(db: AsyncSession, task: CreateTaskModel) -> TaskModel:
     db_task = Task(**task.dict(exclude_unset=True))
     db.add(db_task)
-    db.commit()
-    db.refresh(db_task)
+    await db.commit()
+    await db.refresh(db_task)
     return db_task
 
 
@@ -43,15 +45,18 @@ def get_task_statuses_by_user_request_id(db: Session, user_request_id: int) -> l
     return task_statuses
 
 
-def create_group_if_not_exists(db: Session, group_id: int) -> GroupModel:
-    existing_group = db.query(Group).filter(Group.ID == group_id).first()
+async def create_group_if_not_exists(db: AsyncSession, group_id: int) -> GroupModel:
+    stmt = select(Group).where(Group.ID == group_id)
+    result = await db.execute(stmt)
+    existing_group = result.scalars().first()
+    # existing_group = db.query(Group).filter(Group.ID == group_id).first()
     if existing_group is not None:
         return existing_group
 
     new_group = Group(ID=group_id)
     db.add(new_group)
-    db.commit()
-    db.refresh(new_group)
+    await db.commit()
+    await db.refresh(new_group)
     return new_group
 
 
@@ -103,7 +108,7 @@ def add_task_to_multiple_groups(db: Session, group_ids: list[int], task_id: int)
     return task
 
 
-def find_similar_groups_by_vector(db: Session, target_vector: list[int]) -> list[int]:
+async def find_similar_groups_by_vector(db: AsyncSession, target_vector: list[int]) -> list[int]:
     vector = '[' + ', '.join(str(el) for el in target_vector) + ']'
     sql_query = text(f"""
     SELECT "ID" FROM public.group 
@@ -111,8 +116,9 @@ def find_similar_groups_by_vector(db: Session, target_vector: list[int]) -> list
     LIMIT 3;
     """)
 
-    result = db.execute(sql_query).fetchall()
-    group_ids = [row[0] for row in result]
+    result = await db.execute(sql_query)
+    rows = result.fetchall()
+    group_ids = [row[0] for row in rows]
 
     return group_ids
 

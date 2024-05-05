@@ -1,3 +1,4 @@
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from vectorizer import TextVectorizer
@@ -43,9 +44,9 @@ def check_status_of_user_request(user_request: UserRequestModel, db: Session) ->
     return answer
 
 
-def create_post_tasks_from_request(master: MasterCrawler, request: UserRequestModel, db: Session):
+async def create_post_tasks_from_request(master: MasterCrawler, request: UserRequestModel, db: AsyncSession):
     if not request.group_id:
-        request.group_id = find_simular_groups(request.prompt, db)
+        request.group_id = await find_simular_groups(request.prompt, db)
     for group_id in request.group_id:
         task = CreateTaskModel(
             prompt=request.prompt,
@@ -56,8 +57,8 @@ def create_post_tasks_from_request(master: MasterCrawler, request: UserRequestMo
             time_from=request.time_from,
             time_to=request.time_to,
         )
-        created_task = requests.create_task(db, task)
-        create_group_if_not_exists(db, task.group_id)
+        created_task = await requests.create_task(db, task)
+        await create_group_if_not_exists(db, task.group_id)
         task_for_crawler = CollectPostsTask(created_task.ID,
                                             created_task.prompt,
                                             created_task.group_id,
@@ -66,7 +67,7 @@ def create_post_tasks_from_request(master: MasterCrawler, request: UserRequestMo
         master.add_request(task_for_crawler)
 
 
-def create_group_tasks_from_request(master: MasterCrawler, request: UserRequestModel, db: Session):
+async def create_group_tasks_from_request(master: MasterCrawler, request: UserRequestModel, db: AsyncSession):
     task = CreateTaskModel(
         prompt=request.prompt,
         UserRequestID=request.ID,
@@ -75,13 +76,13 @@ def create_group_tasks_from_request(master: MasterCrawler, request: UserRequestM
         time_from=request.time_from,
         time_to=request.time_to,
     )
-    created_task = requests.create_task(db, task)
+    created_task = await requests.create_task(db, task)
     task_for_crawler = CollectGroupsTask(created_task.ID,
                                          created_task.prompt)
     master.add_request(task_for_crawler)
 
 
-def find_simular_groups(prompt: str, db: Session) -> list[int]:
+async def find_simular_groups(prompt: str, db: AsyncSession) -> list[int]:
     vectorizer = TextVectorizer()
     vector = vectorizer.vectorize(prompt)
-    return find_similar_groups_by_vector(db, vector)
+    return await find_similar_groups_by_vector(db, vector)
